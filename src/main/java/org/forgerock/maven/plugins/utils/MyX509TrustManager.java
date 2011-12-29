@@ -29,7 +29,7 @@ import javax.net.ssl.X509TrustManager;
 
 /**
  *
- * @author aldaris
+ * @author Peter Major
  */
 public class MyX509TrustManager implements X509TrustManager {
 
