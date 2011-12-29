@@ -25,29 +25,39 @@
 package org.forgerock.maven.plugins;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import org.apache.commons.collections.MultiMap;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
-import org.codehaus.plexus.util.FileUtils;
+import org.forgerock.maven.plugins.utils.MyNameVerifier;
+import org.forgerock.maven.plugins.utils.MyNamespaceContext;
+import org.forgerock.maven.plugins.utils.MyX509TrustManager;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  *
@@ -56,7 +66,6 @@ import org.codehaus.plexus.util.FileUtils;
  */
 public class LinkTester extends AbstractMojo {
 
-    private static final Pattern pattern = Pattern.compile("<link\\s+xlink:href=[\"']([^\"']*)[\"']\\s*>", Pattern.DOTALL);
     /**
      * The base directory
      *
@@ -81,31 +90,20 @@ public class LinkTester extends AbstractMojo {
      * @readonly
      */
     protected MavenProject project = new MavenProject();
-    private MultiMap failedUrls = new MultiValueMap();
+    private MultiValueMap failedUrls = new MultiValueMap();
+    private MultiValueMap xmlIds = new MultiValueMap();
+    private MultiValueMap olinks = new MultiValueMap();
     private Set<String> tested = new HashSet<String>();
 
     public LinkTester() {
-        TrustManager[] trustAllCerts = new TrustManager[]{
-            new X509TrustManager() {
-
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-        };
+        TrustManager[] trustAllCerts = new TrustManager[]{new MyX509TrustManager()};
 
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (Exception ex) {
-            getLog().error("Unable to initialize trustAll SSL");
+            getLog().error("Unable to initialize trustAll SSL", ex);
         }
     }
 
@@ -117,19 +115,78 @@ public class LinkTester extends AbstractMojo {
         scanner.setExcludes(excludes);
         scanner.scan();
         String[] files = scanner.getIncludedFiles();
-        for (String path : files) {
-            try {
-                String content = FileUtils.fileRead(path);
-                Matcher matcher = pattern.matcher(content);
-                while (matcher.find()) {
-                    checkUrl(path, matcher.group(1));
-                }
-            } catch (IOException ioe) {
-                getLog().error("IO error while reading resource file: " + path, ioe);
-            }
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        dbf.setXIncludeAware(true);
+
+        SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        try {
+            Schema schema = sf.newSchema(new URL("http://docbook.org/xml/5.0/xsd/docbook.xsd"));
+            dbf.setSchema(schema);
+        } catch (Exception ex) {
+            getLog().error("Error while constructing schema for validation", ex);
         }
-        if (!failedUrls.isEmpty()) {
-            getLog().error("The following files had invalid URLs:\n" + failedUrls.toString());
+        XPathFactory xpf = XPathFactory.newInstance();
+        XPath xpath = xpf.newXPath();
+        xpath.setNamespaceContext(new MyNamespaceContext());
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            XPathExpression expr = xpath.compile("//@xml:id");
+            for (String path : files) {
+                try {
+                    Document doc = db.parse(new File(path));
+                    extractXmlIds(expr, doc, path);
+                    NodeList nodes = doc.getElementsByTagNameNS("http://docbook.org/ns/docbook", "link");
+                    for (int i = 0; i < nodes.getLength(); i++) {
+                        Node node = nodes.item(i);
+                        NamedNodeMap attrs = node.getAttributes();
+                        String url = null;
+                        boolean isOlink = false;
+                        for (int j = 0; j < attrs.getLength(); j++) {
+                            Node attr = attrs.item(j);
+                            if (attr.getLocalName().equals("href")) {
+                                url = attr.getNodeValue();
+                            } else if (attr.getLocalName().equals("role")
+                                    && attr.getNodeValue().equalsIgnoreCase("http://docbook.org/xlink/role/olink")) {
+                                isOlink = true;
+                            }
+                        }
+                        if (url != null) {
+                            if (isOlink) {
+                                olinks.put(path, url);
+                            } else {
+                                checkUrl(path, url);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    getLog().error("Error while processing file: " + path + ". Error: " + ex.getMessage());
+                }
+            }
+            //we can only check olinks after going through all the documents,
+            //otherwise we would see false positives, because of the not yet
+            //processed files
+            for (Map.Entry<String, Collection<String>> entry : (Set<Map.Entry<String, Collection<String>>>) olinks.entrySet()) {
+                for (String val : entry.getValue()) {
+                    checkOlink(entry.getKey(), val);
+                }
+            }
+            if (!failedUrls.isEmpty()) {
+                getLog().error("The following files had invalid URLs:\n" + failedUrls.toString());
+            }
+        } catch (Exception ex) {
+            throw new MojoFailureException("Unexpected error while tesing links", ex);
+        }
+    }
+
+    private void extractXmlIds(XPathExpression expr, Document doc, String path) throws XPathExpressionException {
+        NodeList ids = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        if (ids != null) {
+            for (int i = 0; i < ids.getLength(); i++) {
+                Node node = ids.item(i);
+                File file = new File(path);
+                xmlIds.put(file.getParentFile().getName(), node.getNodeValue());
+            }
         }
     }
 
@@ -157,15 +214,21 @@ public class LinkTester extends AbstractMojo {
                 }
             }
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            getLog().warn(docUrl + ": " + ex.getClass().getName() + " " + ex.getMessage());
             failedUrls.put(path, docUrl);
         }
+        tested.add(docUrl);
     }
 
-    private static class MyNameVerifier implements HostnameVerifier {
-
-        public boolean verify(String string, SSLSession ssls) {
-            return true;
+    private void checkOlink(String path, String olink) {
+        String[] parts = olink.split("#");
+        if (parts.length != 2) {
+            failedUrls.put(path, olink);
+            return;
+        }
+        Collection coll = xmlIds.getCollection(parts[0]);
+        if (coll == null || !coll.contains(parts[1])) {
+            failedUrls.put(path, olink);
         }
     }
 }
