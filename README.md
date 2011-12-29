@@ -1,6 +1,7 @@
 # DocBook link tester Maven plugin
 
 This is a simple Maven plugin allowing you to do some sanity checks on your documentation links. Basically the plugin will look for &lt;link&gt; tags, and check whether they are olinks or not.
+
 * If it's an olink and it's in the format of targetdoc#targetptr, then the plugin will look up all the xml:id attributes throughout the document, if the referred id belongs to the targetdoc, then the check was successful.
 * If it's a regular link, an HttpURLConnection will be opened, and if the response code is higher or equals to 400, the link is considered invalid
 
