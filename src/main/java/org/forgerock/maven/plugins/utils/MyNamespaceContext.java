@@ -30,7 +30,7 @@ import javax.xml.namespace.NamespaceContext;
 
 /**
  *
- * @author aldaris
+ * @author Peter Major
  */
 public class MyNamespaceContext implements NamespaceContext {
 
