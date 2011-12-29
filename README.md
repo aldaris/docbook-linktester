@@ -33,6 +33,7 @@ This will bind the plugin invocation to the pre-site phase.
 ## Execution
 
 By setting the execution in the pom.xml the plugin will be invoked during the build, but if you only want to execute the plugin only every now and then, you can use the following command:
+
     mvn org.forgerock.maven.plugins:linktester-maven-plugin:1.0.0-SNAPSHOT:check
 
 ## License
