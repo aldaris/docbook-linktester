@@ -26,10 +26,28 @@ In the pom.xml file you need to add the following section to the build-plugins l
       <includes>
        <include>**/OpenAM-*.xml</include>
       </includes>
+      <excludes>
+       <exclude>**/OpenAM-random.xml</exclude>
+      </excludes>
+      <validating>false</validating>
+      <xIncludeAware>false</xIncludeAware>
+      <failOnError>false</failOnError>
+      <skipUrls>false</skipUrls>
+      <skipOlinks>false</skipOlinks>
+      <outputFile>linktester.err</outputFile>
      </configuration>
     </plugin>
 
-This will bind the plugin invocation to the pre-site phase.
+This will bind the plugin invocation to the pre-site phase. About the configuration options:
+
+* validating - The XML files will be validated against the DocBook XML Schema. NOTE: XML validation doesn't appear to like xinclude tags, so either use xIncludeAware, or exclude books when using this option.
+* xIncludeAware - When enabled the XML parser will resolve the xinclude:include tags and will inline them into XML. This option can come in handy when your books refer to generated chapters, as this will make sure the internal olink database has the correct targetdoc value.
+* failOnError - When enabled, any XML schema validation failure or invalid olink/url in document will result in a failed build
+* skipUrls - When enabled, URLs throughout the document are not checked
+* skipOlinks - When enabled, olinks throughout the document are not checked
+* outputFile - The validation results will be also logged to this file. (It will override the file on subsequent runs.)
+* include(s) - When xIncludeAware is used only include the books
+* exclude(s) - When xIncludeAware is not used, it is recommended to exclude the books (or disable validation)
 
 ## Execution
 
