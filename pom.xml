@@ -50,6 +50,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/aldaris/docbook-linktester.git</connection>
+        <developerConnection>scm:git:https://github.com/aldaris/docbook-linktester.git</developerConnection>
         <url>scm:git:https://github.com/aldaris/docbook-linktester.git</url>
     </scm>
 
@@ -66,6 +67,18 @@
     <profiles>
         <profile>
             <id>central</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>sonatype-nexus-snapshots</id>
+                    <name>Sonatype Nexus Snapshots</name>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>sonatype-nexus-staging</id>
+                    <name>Nexus Release Repository</name>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
             <build>
                 <pluginManagement>
                     <plugins>
