@@ -1,7 +1,7 @@
 /**
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2012 ForgeRock Inc. All Rights Reserved
+ * Copyright (c) 2011-2013 ForgeRock, Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -58,13 +58,15 @@ import org.codehaus.plexus.util.DirectoryScanner;
 import org.forgerock.maven.plugins.utils.MyErrorHandler;
 import org.forgerock.maven.plugins.utils.MyNameVerifier;
 import org.forgerock.maven.plugins.utils.MyNamespaceContext;
-import org.forgerock.maven.plugins.utils.MyX509TrustManager;
+import org.forgerock.maven.plugins.utils.TrustAllCertsX509TrustManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
+ * A simple maven plugin which tries to perform validation checks against a DocBook XML document. Currently checks for
+ * XML validity, external links, and interdocument olinks.
  *
  * @author Peter Major
  * @goal check
@@ -75,45 +77,49 @@ public class LinkTester extends AbstractMojo {
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
     /**
-     * Included files for search
+     * Included files for search.
      * @parameter
      */
     private String[] includes;
     /**
-     * Excluded files from search
+     * Excluded files from search.
      * @parameter
      */
     private String[] excludes;
     /**
+     * Access to the Maven Project settings.
      * @parameter default-value="${project}"
      * @required
      * @readonly
      */
     protected MavenProject project = new MavenProject();
     /**
+     * Whether to validate the XML against the DocBook XML Schema.
      * @parameter default-value="false"
      */
     private boolean validating;
     /**
+     * Whether to resolve xinclude:include tags and inline the referred documents into the processed XML content.
      * @parameter default-value="false"
      */
     private boolean xIncludeAware;
     /**
+     * Set to <code>true</code> if you want to disable olink checks in your DocBook document.
      * @parameter default-value="false"
      */
     private boolean skipOlinks;
     /**
-     * External links are not checked if set to true
+     * Set to <code>true</code> if you want to disable checks for external links.
      * @parameter default-value="false"
      */
     private boolean skipUrls;
     /**
-     * Build will fail upon error if set to true
+     * Set to <code>true</code> if you want to fail the build upon validation error or invalid links.
      * @parameter default-value="false"
      */
     private boolean failOnError;
     /**
-     * Where to write the plugin execution results
+     * The location of the file where the plugin report is written.
      * @parameter
      */
     private String outputFile;
@@ -126,14 +132,14 @@ public class LinkTester extends AbstractMojo {
     private boolean failure;
 
     public LinkTester() {
-        TrustManager[] trustAllCerts = new TrustManager[]{new MyX509TrustManager()};
+        TrustManager[] trustAllCerts = new TrustManager[]{new TrustAllCertsX509TrustManager()};
 
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (Exception ex) {
-            error("Unable to initialize trustAll SSL", ex);
+            error("Unable to initialize trustAllCerts SSLSocketFactory", ex);
         }
     }
 
@@ -233,7 +239,7 @@ public class LinkTester extends AbstractMojo {
         }
         if (failOnError) {
             if (failure || !failedUrls.isEmpty()) {
-                throw new MojoFailureException("One or more error occured during plugin execution");
+                throw new MojoFailureException("One or more error occurred during plugin execution");
             }
         }
     }
