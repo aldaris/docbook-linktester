@@ -226,7 +226,7 @@ public class LinkTester extends AbstractMojo {
                         }
                     }
                 } catch (Exception ex) {
-                    error("Error while processing file: " + path + ". Error: " + ex.getMessage());
+                    error("Error while processing file: " + path + ". Error: " + ex.getMessage(), ex);
                 }
             }
 
@@ -253,6 +253,9 @@ public class LinkTester extends AbstractMojo {
                 throw new MojoFailureException("One or more error occurred during plugin execution");
             }
         }
+        if (!failure && failedUrls.isEmpty()) {
+            info("DocBook links successfully tested, no errors reported.");
+        }
     }
 
     private void extractXmlIds(XPathExpression expr, Document doc, String path) throws XPathExpressionException {
@@ -277,6 +280,7 @@ public class LinkTester extends AbstractMojo {
             }
             return;
         }
+        debug("Checking " + docUrl + " from file: " + path);
         try {
             URL url = new URL(docUrl);
             URLConnection urlConn = url.openConnection();
@@ -334,6 +338,11 @@ public class LinkTester extends AbstractMojo {
     public final void warn(String line) {
         getLog().warn(line);
         report("[WARNING] " + line);
+    }
+
+    public final void info(String line) {
+        getLog().info(line);
+        report("[INFO] " + line);
     }
 
     public final void error(String line) {
