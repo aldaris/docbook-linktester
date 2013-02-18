@@ -177,6 +177,7 @@ public class LinkTester extends AbstractMojo {
         String[] files = scanner.getIncludedFiles();
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
+        dbf.setExpandEntityReferences(false);
         dbf.setXIncludeAware(xIncludeAware);
 
         if (validating) {
