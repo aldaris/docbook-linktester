@@ -32,10 +32,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -114,6 +117,12 @@ public class LinkTester extends AbstractMojo {
      */
     private boolean skipUrls;
     /**
+     * Valid {@link java.util.regex.Pattern Pattern} enumeration. URLs matching either one of the patterns won't get
+     * validated.
+     * @parameter
+     */
+    private String[] skipUrlPatterns;
+    /**
      * Set to <code>true</code> if you want to fail the build upon validation error or invalid links.
      * @parameter default-value="false"
      */
@@ -124,6 +133,7 @@ public class LinkTester extends AbstractMojo {
      */
     private String outputFile;
     private FileWriter fileWriter;
+    private List<Pattern> patterns = new ArrayList<Pattern>();
     private MultiValueMap failedUrls = new MultiValueMap();
     private MultiValueMap xmlIds = new MultiValueMap();
     private MultiValueMap olinks = new MultiValueMap();
@@ -158,6 +168,7 @@ public class LinkTester extends AbstractMojo {
                 error("Error while creating output file", ioe);
             }
         }
+        generatePatterns();
         DirectoryScanner scanner = new DirectoryScanner();
         scanner.setBasedir(project.getBasedir());
         scanner.setIncludes(includes);
@@ -256,6 +267,10 @@ public class LinkTester extends AbstractMojo {
     }
 
     private void checkUrl(String path, String docUrl) {
+        if (shouldSkipUrl(docUrl)) {
+            debug("Skipping " + docUrl + " since it matches a skipUrlPattern");
+            return;
+        }
         if (tested.contains(docUrl)) {
             if (failedUrls.containsValue(docUrl)) {
                 failedUrls.put(path, docUrl);
@@ -358,5 +373,23 @@ public class LinkTester extends AbstractMojo {
                 getLog().error("Error while flushing report: " + ioe.getMessage());
             }
         }
+    }
+
+    private void generatePatterns() {
+        if (skipUrlPatterns != null) {
+            for (String pattern : skipUrlPatterns) {
+                patterns.add(Pattern.compile(pattern));
+            }
+        }
+    }
+
+    private boolean shouldSkipUrl(String docUrl) {
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(docUrl).matches()) {
+                return true;
+            }
+        }
+        //if the skipUrlPattern list is empty or there was no match, then we should check the URL
+        return false;
     }
 }
