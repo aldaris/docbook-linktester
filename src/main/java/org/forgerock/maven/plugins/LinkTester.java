@@ -243,6 +243,9 @@ public class LinkTester extends AbstractMojo {
             }
             if (!failedUrls.isEmpty()) {
                 error("The following files had invalid URLs:\n" + failedUrls.toString());
+            } else if (!failure) {
+                //there are no failed URLs and the parser didn't encounter any errors either
+                info("DocBook links successfully tested, no errors reported.");
             }
         } catch (Exception ex) {
             throw new MojoFailureException("Unexpected error while tesing links", ex);
@@ -253,9 +256,6 @@ public class LinkTester extends AbstractMojo {
             if (failure || !failedUrls.isEmpty()) {
                 throw new MojoFailureException("One or more error occurred during plugin execution");
             }
-        }
-        if (!failure && failedUrls.isEmpty()) {
-            info("DocBook links successfully tested, no errors reported.");
         }
     }
 
@@ -325,8 +325,9 @@ public class LinkTester extends AbstractMojo {
         currentPath = path;
     }
 
-    public void setFailure() {
+    public void fail(String errorMessage) {
         failure = true;
+        error(errorMessage);
     }
 
     public final void debug(String line) {

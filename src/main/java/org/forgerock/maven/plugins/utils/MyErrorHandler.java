@@ -1,7 +1,7 @@
 /**
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 ForgeRock AS. All Rights Reserved
+ * Copyright (c) 2011-2013 ForgeRock, Inc. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -30,6 +30,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
+ * A custom XML parser error handler that makes sure that warnings and errors are reported in the Maven output. In case
+ * the parser runs into an error or a fatal error, this handler will cause the plugin to fail (if failOnError is set to
+ * <code>true</code>).
  *
  * @author Peter Major
  */
@@ -46,12 +49,10 @@ public class MyErrorHandler implements ErrorHandler {
     }
 
     public void error(SAXParseException saxpe) throws SAXException {
-        linkTester.setFailure();
-        linkTester.error("Error while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
+        linkTester.fail("Error while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
     }
 
     public void fatalError(SAXParseException saxpe) throws SAXException {
-        linkTester.setFailure();
-        linkTester.error("Fatal error while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
+        linkTester.fail("Fatal error while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
     }
 }
