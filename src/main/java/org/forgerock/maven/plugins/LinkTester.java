@@ -293,6 +293,9 @@ public class LinkTester extends AbstractMojo {
                 }
 
                 conn.setConnectTimeout(1000);
+                //if we don't get anything back within 15 seconds it is safe to assume that something is really wrong
+                //with that site..
+                conn.setReadTimeout(15000);
                 int responseCode = conn.getResponseCode();
                 if (responseCode >= 400) {
                     failedUrls.put(path, docUrl);
