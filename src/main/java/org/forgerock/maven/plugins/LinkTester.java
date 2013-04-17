@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.SecureRandom;
@@ -135,6 +136,7 @@ public class LinkTester extends AbstractMojo {
     private FileWriter fileWriter;
     private List<Pattern> patterns = new ArrayList<Pattern>();
     private MultiValueMap failedUrls = new MultiValueMap();
+    private MultiValueMap timedOutUrls = new MultiValueMap();
     private MultiValueMap xmlIds = new MultiValueMap();
     private MultiValueMap olinks = new MultiValueMap();
     private Set<String> tested = new HashSet<String>();
@@ -168,7 +170,7 @@ public class LinkTester extends AbstractMojo {
                 error("Error while creating output file", ioe);
             }
         }
-        generatePatterns();
+        initializeSkipUrlPatterns();
         DirectoryScanner scanner = new DirectoryScanner();
         scanner.setBasedir(project.getBasedir());
         scanner.setIncludes(includes);
@@ -232,10 +234,10 @@ public class LinkTester extends AbstractMojo {
             }
 
             if (!skipOlinks) {
-                //we can only check olinks after going through all the documents,
-                //otherwise we would see false positives, because of the not yet
-                //processed files
-                for (Map.Entry<String, Collection<String>> entry : (Set<Map.Entry<String, Collection<String>>>) olinks.entrySet()) {
+                //we can only check olinks after going through all the documents, otherwise we would see false
+                //positives, because of the not yet processed files
+                for (Map.Entry<String, Collection<String>> entry :
+                        (Set<Map.Entry<String, Collection<String>>>) olinks.entrySet()) {
                     for (String val : entry.getValue()) {
                         checkOlink(entry.getKey(), val);
                     }
@@ -243,7 +245,12 @@ public class LinkTester extends AbstractMojo {
             }
             if (!failedUrls.isEmpty()) {
                 error("The following files had invalid URLs:\n" + failedUrls.toString());
-            } else if (!failure) {
+            }
+            if (!timedOutUrls.isEmpty()) {
+                warn("The following files had unavailable URLs (connection or read timed out):\n"
+                        + timedOutUrls.toString());
+            }
+            if (failedUrls.isEmpty() && timedOutUrls.isEmpty() && !failure) {
                 //there are no failed URLs and the parser didn't encounter any errors either
                 info("DocBook links successfully tested, no errors reported.");
             }
@@ -301,6 +308,9 @@ public class LinkTester extends AbstractMojo {
                     failedUrls.put(path, docUrl);
                 }
             }
+        } catch (SocketTimeoutException ste) {
+            warn(docUrl + ": " + ste.getClass().getName() +" " + ste.getMessage());
+            timedOutUrls.put(path, docUrl);
         } catch (Exception ex) {
             warn(docUrl + ": " + ex.getClass().getName() + " " + ex.getMessage());
             failedUrls.put(path, docUrl);
@@ -389,7 +399,7 @@ public class LinkTester extends AbstractMojo {
         }
     }
 
-    private void generatePatterns() {
+    private void initializeSkipUrlPatterns() {
         if (skipUrlPatterns != null) {
             for (String pattern : skipUrlPatterns) {
                 patterns.add(Pattern.compile(pattern));
