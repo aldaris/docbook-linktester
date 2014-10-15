@@ -1,7 +1,7 @@
 /**
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2013 ForgeRock, Inc. All Rights Reserved
+ * Copyright (c) 2011-2014 ForgeRock AS. All Rights Reserved
  *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
@@ -80,6 +80,12 @@ public class LinkTester extends AbstractMojo {
     private static final String DOCBOOK_XSD = "http://docbook.org/xml/5.0/xsd/docbook.xsd";
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
+    /**
+     * Base directory where DocBook XML files are found.
+     * @parameter
+     * @since 1.3.0
+     */
+    private File baseDir;
     /**
      * Included files for search.
      * @parameter
@@ -172,11 +178,27 @@ public class LinkTester extends AbstractMojo {
         }
         initializeSkipUrlPatterns();
         DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(project.getBasedir());
+        if (baseDir == null ) {
+            scanner.setBasedir(project.getBasedir());
+        } else {
+            scanner.setBasedir(baseDir);
+        }
         scanner.setIncludes(includes);
         scanner.setExcludes(excludes);
         scanner.scan();
-        String[] files = scanner.getIncludedFiles();
+
+        // The scan() returns paths that are relative to setBasedir().
+        // If baseDir is configured, prefix it to the files.
+        String[] files = new String[scanner.getIncludedFiles().length];
+        if (baseDir == null) {
+            files = scanner.getIncludedFiles();
+        } else {
+            int i = 0;
+            for (String file: scanner.getIncludedFiles()) {
+                files[i] = new File(baseDir, file).getPath();
+                ++i;
+            }
+        }
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         dbf.setExpandEntityReferences(false);
