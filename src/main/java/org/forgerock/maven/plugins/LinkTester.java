@@ -85,7 +85,7 @@ public class LinkTester extends AbstractMojo {
      * @parameter
      * @since 1.3.0
      */
-    private File baseDir;
+    private File directory;
     /**
      * Included files for search.
      * @parameter
@@ -178,24 +178,24 @@ public class LinkTester extends AbstractMojo {
         }
         initializeSkipUrlPatterns();
         DirectoryScanner scanner = new DirectoryScanner();
-        if (baseDir == null ) {
+        if (directory == null ) {
             scanner.setBasedir(project.getBasedir());
         } else {
-            scanner.setBasedir(baseDir);
+            scanner.setBasedir(directory);
         }
         scanner.setIncludes(includes);
         scanner.setExcludes(excludes);
         scanner.scan();
 
         // The scan() returns paths that are relative to setBasedir().
-        // If baseDir is configured, prefix it to the files.
+        // If directory is configured, prefix it to the files.
         String[] files = new String[scanner.getIncludedFiles().length];
-        if (baseDir == null) {
+        if (directory == null) {
             files = scanner.getIncludedFiles();
         } else {
             int i = 0;
             for (String file: scanner.getIncludedFiles()) {
-                files[i] = new File(baseDir, file).getPath();
+                files[i] = new File(directory, file).getPath();
                 ++i;
             }
         }
