@@ -189,14 +189,10 @@ public class LinkTester extends AbstractMojo {
 
         // The scan() returns paths that are relative to setBasedir().
         // If directory is configured, prefix it to the files.
-        String[] files = new String[scanner.getIncludedFiles().length];
-        if (directory == null) {
-            files = scanner.getIncludedFiles();
-        } else {
-            int i = 0;
-            for (String file: scanner.getIncludedFiles()) {
-                files[i] = new File(directory, file).getPath();
-                ++i;
+        String[] files = scanner.getIncludedFiles();
+        if (directory != null) {
+            for (int i = 0; i < files.length; ++i) {
+                files[i] = new File(directory, files[i]).getPath();
             }
         }
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
