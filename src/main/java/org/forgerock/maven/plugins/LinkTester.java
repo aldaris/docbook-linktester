@@ -191,7 +191,7 @@ public class LinkTester extends AbstractMojo {
         // If directory is configured, prefix it to the files.
         String[] files = scanner.getIncludedFiles();
         if (directory != null) {
-            for (int i = 0; i < files.length; ++i) {
+            for (int i = 0; i < files.length; i++) {
                 files[i] = new File(directory, files[i]).getPath();
             }
         }
