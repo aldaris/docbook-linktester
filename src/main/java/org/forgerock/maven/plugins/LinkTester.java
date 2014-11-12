@@ -202,12 +202,12 @@ public class LinkTester extends AbstractMojo {
             DocumentBuilder db = dbf.newDocumentBuilder();
             db.setErrorHandler(new MyErrorHandler(this));
             XPathExpression expr = xpath.compile("//@xml:id");
-            for (String path : files) {
-                setCurrentPath(path);
+            for (String relativePath : files) {
+                setCurrentPath(relativePath);
                 try {
-                    Document doc = db.parse(new File(path));
+                    Document doc = db.parse(new File(project.getBasedir(), relativePath));
                     if (!skipOlinks) {
-                        extractXmlIds(expr, doc, path);
+                        extractXmlIds(expr, doc, relativePath);
                     }
                     NodeList nodes = doc.getElementsByTagNameNS(DOCBOOK_NS, "link");
                     for (int i = 0; i < nodes.getLength(); i++) {
@@ -226,14 +226,14 @@ public class LinkTester extends AbstractMojo {
                         }
                         if (url != null) {
                             if (isOlink && !skipOlinks) {
-                                olinks.put(path, url);
+                                olinks.put(relativePath, url);
                             } else if (!isOlink && !skipUrls) {
-                                checkUrl(path, url);
+                                checkUrl(relativePath, url);
                             }
                         }
                     }
                 } catch (Exception ex) {
-                    error("Error while processing file: " + path + ". Error: " + ex.getMessage(), ex);
+                    error("Error while processing file: " + relativePath + ". Error: " + ex.getMessage(), ex);
                 }
             }
 
