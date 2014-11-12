@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -67,6 +68,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * A simple maven plugin which tries to perform validation checks against a DocBook XML document. Currently checks for
@@ -187,8 +189,10 @@ public class LinkTester extends AbstractMojo {
             try {
                 Schema schema = sf.newSchema(new URL(DOCBOOK_XSD));
                 dbf.setSchema(schema);
-            } catch (Exception ex) {
-                error("Error while constructing schema for validation", ex);
+            } catch (MalformedURLException murle) {
+                error("Invalid URL provided as schema source", murle);
+            } catch (SAXException saxe) {
+                error("Parsing error occurred while constructing schema for validation", saxe);
             }
         }
         XPathFactory xpf = XPathFactory.newInstance();
