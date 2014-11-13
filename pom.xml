@@ -48,10 +48,10 @@
     <developers>
         <developer>
             <id>aldaris</id>
-            <name>Péter Major</name>
+            <name>Peter Major</name>
             <organization>ForgeRock</organization>
             <organizationUrl>http://forgerock.com</organizationUrl>
-            <timezone>+1</timezone>
+            <timezone>0</timezone>
         </developer>
     </developers>
 
