@@ -50,9 +50,9 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.plexus.util.DirectoryScanner;
-import org.forgerock.maven.plugins.utils.MyErrorHandler;
-import org.forgerock.maven.plugins.utils.MyNameVerifier;
-import org.forgerock.maven.plugins.utils.MyNamespaceContext;
+import org.forgerock.maven.plugins.utils.LoggingErrorHandler;
+import org.forgerock.maven.plugins.utils.TrustAllHostnameVerifier;
+import org.forgerock.maven.plugins.utils.XmlNamespaceContext;
 import org.forgerock.maven.plugins.utils.TrustAllCertsX509TrustManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -187,10 +187,10 @@ public class LinkTester extends AbstractMojo {
         }
         XPathFactory xpf = XPathFactory.newInstance();
         XPath xpath = xpf.newXPath();
-        xpath.setNamespaceContext(new MyNamespaceContext());
+        xpath.setNamespaceContext(new XmlNamespaceContext());
         try {
             DocumentBuilder db = dbf.newDocumentBuilder();
-            db.setErrorHandler(new MyErrorHandler(this));
+            db.setErrorHandler(new LoggingErrorHandler(this));
             XPathExpression expr = xpath.compile("//@xml:id");
             for (String relativePath : files) {
                 setCurrentPath(relativePath);
@@ -290,7 +290,7 @@ public class LinkTester extends AbstractMojo {
                 HttpURLConnection conn = (HttpURLConnection) urlConn;
                 if (conn instanceof HttpsURLConnection) {
                     HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
-                    httpsConn.setHostnameVerifier(new MyNameVerifier());
+                    httpsConn.setHostnameVerifier(new TrustAllHostnameVerifier());
                 }
 
                 conn.setConnectTimeout(1000);

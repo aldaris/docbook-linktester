@@ -15,30 +15,15 @@
  */
 package org.forgerock.maven.plugins.utils;
 
-import java.util.Iterator;
-import javax.xml.XMLConstants;
-import javax.xml.namespace.NamespaceContext;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 
 /**
- * A simple {@link NamespaceContext} implementation to map the "xml" prefix to the XML Namespace URI.
+ * A simple hostname verifier that always succeeds to verify the hostname during SSL handshake.
  */
-public class MyNamespaceContext implements NamespaceContext {
+public class TrustAllHostnameVerifier implements HostnameVerifier {
 
-    public String getNamespaceURI(String prefix) {
-        if (prefix == null) {
-            throw new NullPointerException("Null prefix");
-        } else if (prefix.equals("xml")) {
-            return XMLConstants.XML_NS_URI;
-        }
-
-        return XMLConstants.NULL_NS_URI;
-    }
-
-    public String getPrefix(String namespaceURI) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public Iterator getPrefixes(String namespaceURI) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public boolean verify(String hostname, SSLSession sslSession) {
+        return true;
     }
 }

@@ -25,11 +25,11 @@ import org.xml.sax.SAXParseException;
  * the parser runs into an error or a fatal error, this handler will cause the plugin to fail (if failOnError is set to
  * <code>true</code>).
  */
-public class MyErrorHandler implements ErrorHandler {
+public class LoggingErrorHandler implements ErrorHandler {
 
-    private LinkTester linkTester;
+    private final LinkTester linkTester;
 
-    public MyErrorHandler(LinkTester linkTester) {
+    public LoggingErrorHandler(LinkTester linkTester) {
         this.linkTester = linkTester;
     }
 
