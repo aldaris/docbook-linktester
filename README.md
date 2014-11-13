@@ -12,7 +12,7 @@ In the pom.xml file you need to add the following section to the build-plugins l
     <plugin>
      <groupId>org.forgerock.maven.plugins</groupId>
      <artifactId>linktester-maven-plugin</artifactId>
-     <version>1.2.0-SNAPSHOT</version>
+     <version>1.3.0-SNAPSHOT</version>
      <inherited>false</inherited>
      <executions>
       <execution>
@@ -23,6 +23,7 @@ In the pom.xml file you need to add the following section to the build-plugins l
       </execution>
      </executions>
      <configuration>
+      <directory>${basedir}/src/main/docbkx</directory>
       <includes>
        <include>**/index.xml</include>
       </includes>
@@ -43,6 +44,7 @@ In the pom.xml file you need to add the following section to the build-plugins l
 
 This will bind the plugin invocation to the pre-site phase. About the configuration options:
 
+* directory - Directory where the DocBook XML files are found. Default directory is the project's `${basedir}`.
 * validating - The XML files will be validated against the DocBook XML Schema. NOTE: XML validation doesn't appear to like xinclude tags, so either use xIncludeAware, or exclude books when using this option (in case you have a book XML that xincludes chapters).
 * xIncludeAware - When enabled the XML parser will resolve the xinclude:include tags and will inline them into XML. This option can come in handy when your books refer to generated chapters, as this will make sure the internal olink database has the correct targetdoc value. If this is enabled, then most likely you only want to include the book XMLs and not the chapters.
 * failOnError - When enabled, any XML schema validation failure or invalid olink/url in document will result in a failed build
@@ -57,7 +59,7 @@ This will bind the plugin invocation to the pre-site phase. About the configurat
 
 By setting the execution in the pom.xml the plugin will be invoked during the build, but if you only want to execute the plugin every now and then, you can use the following command:
 
-    mvn org.forgerock.maven.plugins:linktester-maven-plugin:1.2.0-SNAPSHOT:check
+    mvn org.forgerock.maven.plugins:linktester-maven-plugin:1.3.0-SNAPSHOT:check
 
 ## License
 
