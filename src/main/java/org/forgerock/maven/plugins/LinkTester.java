@@ -322,6 +322,7 @@ public class LinkTester extends AbstractMojo {
                 conn.setReadTimeout(15000);
                 int responseCode = conn.getResponseCode();
                 if (responseCode >= 400) {
+                    warn(docUrl + ": received unexpected response code: " + responseCode);
                     failedUrls.put(path, docUrl);
                 }
             }
