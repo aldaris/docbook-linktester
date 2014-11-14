@@ -126,14 +126,15 @@ public class LinkTester extends AbstractMojo {
     @Parameter
     private String outputFile;
     private FileWriter fileWriter;
-    private List<Pattern> patterns = new ArrayList<Pattern>();
-    private MultiValueMap failedUrls = new MultiValueMap();
-    private MultiValueMap timedOutUrls = new MultiValueMap();
-    private MultiValueMap xmlIds = new MultiValueMap();
-    private MultiValueMap olinks = new MultiValueMap();
-    private Set<String> tested = new HashSet<String>();
-    private String currentPath;
     private boolean failure;
+    private String currentPath;
+    private final List<Pattern> patterns = new ArrayList<Pattern>();
+    private final MultiValueMap failedUrls = new MultiValueMap();
+    private final MultiValueMap timedOutUrls = new MultiValueMap();
+    private final MultiValueMap xmlIds = new MultiValueMap();
+    private final MultiValueMap olinks = new MultiValueMap();
+    private final Set<String> tested = new HashSet<String>();
+
     static {
         TrustManager[] trustAllCerts = new TrustManager[]{new TrustAllCertsX509TrustManager()};
 
