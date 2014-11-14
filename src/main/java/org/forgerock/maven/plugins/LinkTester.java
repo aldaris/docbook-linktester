@@ -124,7 +124,7 @@ public class LinkTester extends AbstractMojo {
      * The location of the file where the plugin report is written.
      */
     @Parameter
-    private String outputFile;
+    private File outputFile;
     private FileWriter fileWriter;
     private boolean failure;
     private String currentPath;
@@ -150,13 +150,15 @@ public class LinkTester extends AbstractMojo {
     @Override()
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (outputFile != null) {
-            File file = new File(outputFile);
-            if (file.exists()) {
+            if (!outputFile.isAbsolute()) {
+                outputFile = new File(project.getBasedir(), outputFile.getPath());
+            }
+            if (outputFile.exists()) {
                 debug("Deleting existing outputFile: " + outputFile);
-                file.delete();
+                outputFile.delete();
             }
             try {
-                file.createNewFile();
+                outputFile.createNewFile();
                 fileWriter = new FileWriter(outputFile);
             } catch (IOException ioe) {
                 error("Error while creating output file", ioe);
