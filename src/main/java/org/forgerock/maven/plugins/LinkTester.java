@@ -38,6 +38,7 @@ import javax.net.ssl.TrustManager;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.xpath.XPath;
@@ -49,7 +50,11 @@ import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
+import org.forgerock.maven.plugins.model.DocSource;
 import org.forgerock.maven.plugins.utils.LoggingErrorHandler;
 import org.forgerock.maven.plugins.utils.TrustAllHostnameVerifier;
 import org.forgerock.maven.plugins.utils.XmlNamespaceContext;
@@ -61,67 +66,61 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * A simple maven plugin which tries to perform validation checks against a DocBook XML document. Currently checks for
- * XML validity, external links, and interdocument olinks.
- *
- * @goal check
+ * This goal will check the selected DocBook documents for XML validity and will also verify the validity of external
+ * links and interdocument olinks that can be found throughout the project.
  */
+@Mojo(name = "check")
 public class LinkTester extends AbstractMojo {
 
     private static final String DOCBOOK_XSD = "http://docbook.org/xml/5.0/xsd/docbook.xsd";
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
+
     /**
-     * Base directory where DocBook XML files are found.
-     * @parameter default-value="${basedir}"
-     * @since 1.3.0
+     * The list of {@link DocSource} elements that will be used to locate all the documentation files.
      */
-    private File directory;
+    @Parameter
+    private List<DocSource> docSources;
     /**
-     * Included files for search.
-     * @parameter
+     * Access to the Maven Project settings.
      */
-    private String[] includes;
-    /**
-     * Excluded files from search.
-     * @parameter
-     */
-    private String[] excludes;
+    @Parameter(defaultValue = "${project}", required = true, readonly = true)
+    protected MavenProject project = new MavenProject();
     /**
      * Whether to validate the XML against the DocBook XML Schema.
-     * @parameter default-value="false"
      */
+    @Parameter(defaultValue = "false")
     private boolean validating;
     /**
      * Whether to resolve xinclude:include tags and inline the referred documents into the processed XML content.
-     * @parameter default-value="false"
      */
+    @Parameter(defaultValue = "false")
     private boolean xIncludeAware;
     /**
      * Set to <code>true</code> if you want to disable olink checks in your DocBook document.
-     * @parameter default-value="false"
      */
+    @Parameter(defaultValue = "false")
     private boolean skipOlinks;
     /**
      * Set to <code>true</code> if you want to disable checks for external links.
-     * @parameter default-value="false"
      */
+    @Parameter(defaultValue = "false")
     private boolean skipUrls;
     /**
      * Valid {@link java.util.regex.Pattern Pattern} enumeration. URLs matching either one of the patterns won't get
      * validated.
-     * @parameter
      */
+    @Parameter
     private String[] skipUrlPatterns;
     /**
      * Set to <code>true</code> if you want to fail the build upon validation error or invalid links.
-     * @parameter default-value="false"
      */
+    @Parameter(defaultValue = "false")
     private boolean failOnError;
     /**
      * The location of the file where the plugin report is written.
-     * @parameter
      */
+    @Parameter
     private String outputFile;
     private FileWriter fileWriter;
     private List<Pattern> patterns = new ArrayList<Pattern>();
@@ -161,14 +160,8 @@ public class LinkTester extends AbstractMojo {
             }
         }
         initializeSkipUrlPatterns();
-        DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(directory);
-        scanner.setIncludes(includes);
-        scanner.setExcludes(excludes);
-        scanner.scan();
 
-        String[] files = scanner.getIncludedFiles();
-
+        //Initialize XML parsers and XPath expressions
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         dbf.setExpandEntityReferences(false);
@@ -185,48 +178,31 @@ public class LinkTester extends AbstractMojo {
                 error("Parsing error occurred while constructing schema for validation", saxe);
             }
         }
+        DocumentBuilder db;
+        try {
+            db = dbf.newDocumentBuilder();
+            db.setErrorHandler(new LoggingErrorHandler(this));
+        } catch (ParserConfigurationException pce) {
+            throw new MojoExecutionException("Unable to create new DocumentBuilder", pce);
+        }
+
         XPathFactory xpf = XPathFactory.newInstance();
         XPath xpath = xpf.newXPath();
         xpath.setNamespaceContext(new XmlNamespaceContext());
+        XPathExpression expr;
         try {
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            db.setErrorHandler(new LoggingErrorHandler(this));
-            XPathExpression expr = xpath.compile("//@xml:id");
-            for (String relativePath : files) {
-                setCurrentPath(relativePath);
-                try {
-                    Document doc = db.parse(new File(directory, relativePath));
-                    if (!skipOlinks) {
-                        extractXmlIds(expr, doc, relativePath);
-                    }
-                    NodeList nodes = doc.getElementsByTagNameNS(DOCBOOK_NS, "link");
-                    for (int i = 0; i < nodes.getLength(); i++) {
-                        Node node = nodes.item(i);
-                        NamedNodeMap attrs = node.getAttributes();
-                        String url = null;
-                        boolean isOlink = false;
-                        for (int j = 0; j < attrs.getLength(); j++) {
-                            Node attr = attrs.item(j);
-                            if (attr.getLocalName().equals("href")) {
-                                url = attr.getNodeValue();
-                            } else if (attr.getLocalName().equals("role")
-                                    && attr.getNodeValue().equalsIgnoreCase(OLINK_ROLE)) {
-                                isOlink = true;
-                            }
-                        }
-                        if (url != null) {
-                            if (isOlink && !skipOlinks) {
-                                olinks.put(relativePath, url);
-                            } else if (!isOlink && !skipUrls) {
-                                checkUrl(relativePath, url);
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    error("Error while processing file: " + relativePath + ". Error: " + ex.getMessage(), ex);
-                }
-            }
+            expr = xpath.compile("//@xml:id");
+        } catch (XPathExpressionException xpee) {
+            throw new MojoExecutionException("Unable to compile Xpath expression", xpee);
+        }
 
+        if (docSources != null) {
+            for (DocSource docSource : docSources) {
+                processDocSource(docSource, db, expr);
+            }
+        }
+
+        try {
             if (!skipOlinks) {
                 //we can only check olinks after going through all the documents, otherwise we would see false
                 //positives, because of the not yet processed files
@@ -248,14 +224,61 @@ public class LinkTester extends AbstractMojo {
                 //there are no failed URLs and the parser didn't encounter any errors either
                 info("DocBook links successfully tested, no errors reported.");
             }
-        } catch (Exception ex) {
-            throw new MojoFailureException("Unexpected error while tesing links", ex);
         } finally {
             flushReport();
         }
         if (failOnError) {
             if (failure || !failedUrls.isEmpty()) {
                 throw new MojoFailureException("One or more error occurred during plugin execution");
+            }
+        }
+    }
+
+    private void processDocSource(DocSource docSource, DocumentBuilder db, XPathExpression expr) {
+        DirectoryScanner scanner = new DirectoryScanner();
+
+        File baseDir = docSource.getDirectory();
+        if (baseDir == null) {
+            baseDir = project.getBasedir();
+        }
+        scanner.setBasedir(baseDir);
+        scanner.setIncludes(docSource.getIncludes());
+        scanner.setExcludes(docSource.getExcludes());
+        scanner.scan();
+
+        String[] files = scanner.getIncludedFiles();
+        for (String relativePath : files) {
+            setCurrentPath(relativePath);
+            try {
+                Document doc = db.parse(new File(baseDir, relativePath));
+                if (!skipOlinks) {
+                    extractXmlIds(expr, doc, relativePath);
+                }
+                NodeList nodes = doc.getElementsByTagNameNS(DOCBOOK_NS, "link");
+                for (int i = 0; i < nodes.getLength(); i++) {
+                    Node node = nodes.item(i);
+                    NamedNodeMap attrs = node.getAttributes();
+                    String url = null;
+                    boolean isOlink = false;
+                    for (int j = 0; j < attrs.getLength(); j++) {
+                        Node attr = attrs.item(j);
+                        if (attr.getLocalName().equals("href")) {
+                            url = attr.getNodeValue();
+                        } else if (attr.getLocalName().equals("role")
+                                && attr.getNodeValue().equalsIgnoreCase(OLINK_ROLE)) {
+                            isOlink = true;
+                        }
+                    }
+                    if (url != null) {
+                        if (isOlink && !skipOlinks) {
+                            olinks.put(relativePath, url);
+                        } else if (!isOlink && !skipUrls) {
+                            checkUrl(relativePath, url);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                error("Error while processing file: " + relativePath + ". Error: " + ex.getMessage(), ex);
             }
         }
     }
@@ -303,7 +326,7 @@ public class LinkTester extends AbstractMojo {
                 }
             }
         } catch (SocketTimeoutException ste) {
-            warn(docUrl + ": " + ste.getClass().getName() +" " + ste.getMessage());
+            warn(docUrl + ": " + ste.getClass().getName() + " " + ste.getMessage());
             timedOutUrls.put(path, docUrl);
         } catch (Exception ex) {
             warn(docUrl + ": " + ex.getClass().getName() + " " + ex.getMessage());
