@@ -58,7 +58,6 @@ import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.forgerock.maven.plugins.utils.MyErrorHandler;
 import org.forgerock.maven.plugins.utils.MyNameVerifier;
@@ -84,7 +83,7 @@ public class LinkTester extends AbstractMojo {
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
     /**
      * Base directory where DocBook XML files are found.
-     * @parameter
+     * @parameter default-value="${basedir}"
      * @since 1.3.0
      */
     private File directory;
@@ -98,13 +97,6 @@ public class LinkTester extends AbstractMojo {
      * @parameter
      */
     private String[] excludes;
-    /**
-     * Access to the Maven Project settings.
-     * @parameter default-value="${project}"
-     * @required
-     * @readonly
-     */
-    protected MavenProject project = new MavenProject();
     /**
      * Whether to validate the XML against the DocBook XML Schema.
      * @parameter default-value="false"
@@ -180,23 +172,13 @@ public class LinkTester extends AbstractMojo {
         }
         initializeSkipUrlPatterns();
         DirectoryScanner scanner = new DirectoryScanner();
-        if (directory == null ) {
-            scanner.setBasedir(project.getBasedir());
-        } else {
-            scanner.setBasedir(directory);
-        }
+        scanner.setBasedir(directory);
         scanner.setIncludes(includes);
         scanner.setExcludes(excludes);
         scanner.scan();
 
-        // The scan() returns paths that are relative to setBasedir().
-        // If directory is configured, prefix it to the files.
         String[] files = scanner.getIncludedFiles();
-        if (directory != null) {
-            for (int i = 0; i < files.length; i++) {
-                files[i] = new File(directory, files[i]).getPath();
-            }
-        }
+
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         dbf.setExpandEntityReferences(false);
@@ -223,7 +205,7 @@ public class LinkTester extends AbstractMojo {
             for (String relativePath : files) {
                 setCurrentPath(relativePath);
                 try {
-                    Document doc = db.parse(new File(project.getBasedir(), relativePath));
+                    Document doc = db.parse(new File(directory, relativePath));
                     if (!skipOlinks) {
                         extractXmlIds(expr, doc, relativePath);
                     }
