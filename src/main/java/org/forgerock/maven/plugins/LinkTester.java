@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -75,6 +77,7 @@ public class LinkTester extends AbstractMojo {
     private static final String DOCBOOK_XSD = "http://docbook.org/xml/5.0/xsd/docbook.xsd";
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
+    private static final SSLSocketFactory TRUST_ALL_SOCKET_FACTORY;
 
     /**
      * The list of {@link DocSource} elements that will be used to locate all the documentation files.
@@ -131,16 +134,15 @@ public class LinkTester extends AbstractMojo {
     private Set<String> tested = new HashSet<String>();
     private String currentPath;
     private boolean failure;
-
-    public LinkTester() {
+    static {
         TrustManager[] trustAllCerts = new TrustManager[]{new TrustAllCertsX509TrustManager()};
 
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception ex) {
-            error("Unable to initialize trustAllCerts SSLSocketFactory", ex);
+            TRUST_ALL_SOCKET_FACTORY = sc.getSocketFactory();
+        } catch (GeneralSecurityException gse) {
+            throw new IllegalStateException("Unable to initialize trustAllCerts SSLSocketFactory", gse);
         }
     }
 
@@ -314,6 +316,7 @@ public class LinkTester extends AbstractMojo {
                 if (conn instanceof HttpsURLConnection) {
                     HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
                     httpsConn.setHostnameVerifier(new TrustAllHostnameVerifier());
+                    httpsConn.setSSLSocketFactory(TRUST_ALL_SOCKET_FACTORY);
                 }
 
                 conn.setConnectTimeout(1000);
