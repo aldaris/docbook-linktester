@@ -12,7 +12,7 @@
  * Header, with the fields enclosed by brackets [] replaced by your own identifying
  * information: "Portions copyright [year] [name of copyright owner]".
  *
- * Copyright 2012-2014 ForgeRock AS.
+ * Copyright 2012-2015 ForgeRock AS.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -41,8 +41,8 @@
 
     <scm>
         <connection>scm:git:https://github.com/aldaris/docbook-linktester.git</connection>
-        <developerConnection>scm:git:https://github.com/aldaris/docbook-linktester.git</developerConnection>
-        <url>scm:git:https://github.com/aldaris/docbook-linktester.git</url>
+        <developerConnection>scm:git:git@github.com:aldaris/docbook-linktester.git</developerConnection>
+        <url>https://github.com/aldaris/docbook-linktester</url>
     </scm>
 
     <developers>
@@ -60,12 +60,12 @@
             <id>central</id>
             <distributionManagement>
                 <snapshotRepository>
-                    <id>sonatype-nexus-snapshots</id>
+                    <id>ossrh</id>
                     <name>Sonatype Nexus Snapshots</name>
                     <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
                 </snapshotRepository>
                 <repository>
-                    <id>sonatype-nexus-staging</id>
+                    <id>ossrh</id>
                     <name>Nexus Release Repository</name>
                     <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
                 </repository>
@@ -74,25 +74,21 @@
                 <pluginManagement>
                     <plugins>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-javadoc-plugin</artifactId>
                             <version>2.10.1</version>
                         </plugin>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-source-plugin</artifactId>
                             <version>2.4</version>
                         </plugin>
                         <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-gpg-plugin</artifactId>
-                            <version>1.5</version>
+                            <version>1.6</version>
                         </plugin>
                     </plugins>
                 </pluginManagement>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <executions>
                             <execution>
@@ -104,7 +100,6 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
                         <executions>
                             <execution>
@@ -116,7 +111,6 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <executions>
                             <execution>
@@ -137,9 +131,18 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-plugin-plugin</artifactId>
                     <version>${maven-plugin-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                    <artifactId>maven-plugin-plugin</artifactId>
                     <executions>
                         <execution>
                             <id>mojo-descriptor</id>
@@ -161,8 +164,16 @@
                         <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                     </configuration>
                 </plugin>
-            </plugins>
-        </pluginManagement>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>central</releaseProfiles>
+                    <goals>deploy</goals>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
     <dependencyManagement>
         <dependencies>
@@ -212,7 +223,7 @@
     </dependencies>
 
     <properties>
-        <maven-plugin-plugin.version>3.3</maven-plugin-plugin.version>
+        <maven-plugin-plugin.version>3.4</maven-plugin-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 </project>
