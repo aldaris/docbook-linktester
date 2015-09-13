@@ -270,30 +270,9 @@ public class LinkTester extends AbstractMojo {
                 Document doc = db.parse(new File(baseDir, relativePath));
                 if (!skipOlinks) {
                     extractXmlIds(expr, doc, relativePath);
+                    processOlinkElements(doc.getElementsByTagNameNS(DOCBOOK_NS, "olink"));
                 }
-                NodeList nodes = doc.getElementsByTagNameNS(DOCBOOK_NS, "link");
-                for (int i = 0; i < nodes.getLength(); i++) {
-                    Node node = nodes.item(i);
-                    NamedNodeMap attrs = node.getAttributes();
-                    String url = null;
-                    boolean isOlink = false;
-                    for (int j = 0; j < attrs.getLength(); j++) {
-                        Node attr = attrs.item(j);
-                        if (attr.getLocalName().equals("href")) {
-                            url = attr.getNodeValue();
-                        } else if (attr.getLocalName().equals("role")
-                                && attr.getNodeValue().equalsIgnoreCase(OLINK_ROLE)) {
-                            isOlink = true;
-                        }
-                    }
-                    if (url != null) {
-                        if (isOlink && !skipOlinks) {
-                            olinks.put(relativePath, url);
-                        } else if (!isOlink && !skipUrls) {
-                            checkUrl(relativePath, url);
-                        }
-                    }
-                }
+                processLinkElements(doc.getElementsByTagNameNS(DOCBOOK_NS, "link"));
             } catch (Exception ex) {
                 error("Error while processing file: " + relativePath + ". Error: " + ex.getMessage(), ex);
             }
@@ -307,6 +286,55 @@ public class LinkTester extends AbstractMojo {
                 Node node = ids.item(i);
                 File file = new File(path);
                 xmlIds.put(file.getParentFile().getName(), node.getNodeValue());
+            }
+        }
+    }
+
+    private void processLinkElements(NodeList nodes) {
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            NamedNodeMap attrs = node.getAttributes();
+            String url = null;
+            boolean isOlink = false;
+            for (int j = 0; j < attrs.getLength(); j++) {
+                Node attr = attrs.item(j);
+                if (attr.getLocalName().equals("href")) {
+                    url = attr.getNodeValue();
+                } else if (attr.getLocalName().equals("role")
+                        && attr.getNodeValue().equalsIgnoreCase(OLINK_ROLE)) {
+                    isOlink = true;
+                }
+            }
+            if (url != null) {
+                if (isOlink && !skipOlinks) {
+                    olinks.put(currentPath, url);
+                } else if (!isOlink && !skipUrls) {
+                    checkUrl(currentPath, url);
+                }
+            }
+        }
+    }
+
+    private void processOlinkElements(NodeList nodes) {
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            NamedNodeMap attrs = node.getAttributes();
+            String targetdoc = null;
+            String targetptr = null;
+
+            for (int j = 0; j < attrs.getLength(); j++) {
+                Node attr = attrs.item(j);
+                if ("targetdoc".equals(attr.getLocalName())) {
+                    targetdoc = attr.getNodeValue();
+                } else if ("targetptr".equals(attr.getLocalName())) {
+                    targetptr = attr.getNodeValue();
+                }
+            }
+
+            if (targetdoc == null || targetptr == null) {
+                failedUrls.put(currentPath, targetdoc + "#" + targetptr);
+            } else {
+                olinks.put(currentPath, targetdoc + "#" + targetptr);
             }
         }
     }
