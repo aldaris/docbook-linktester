@@ -27,7 +27,6 @@ import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,8 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import org.apache.commons.collections.map.MultiValueMap;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -129,10 +129,10 @@ public class LinkTester extends AbstractMojo {
     private boolean failure;
     private String currentPath;
     private final List<Pattern> patterns = new ArrayList<Pattern>();
-    private final MultiValueMap failedUrls = new MultiValueMap();
-    private final MultiValueMap timedOutUrls = new MultiValueMap();
-    private final MultiValueMap xmlIds = new MultiValueMap();
-    private final MultiValueMap olinks = new MultiValueMap();
+    private final Multimap<String, String> failedUrls = ArrayListMultimap.create();
+    private final Multimap<String, String> timedOutUrls = ArrayListMultimap.create();
+    private final Multimap<String, String> xmlIds = ArrayListMultimap.create();
+    private final Multimap<String, String> olinks = ArrayListMultimap.create();
     private final Set<String> tested = new HashSet<String>();
 
     static {
@@ -212,11 +212,8 @@ public class LinkTester extends AbstractMojo {
             if (!skipOlinks) {
                 //we can only check olinks after going through all the documents, otherwise we would see false
                 //positives, because of the not yet processed files
-                for (Map.Entry<String, Collection<String>> entry :
-                        (Set<Map.Entry<String, Collection<String>>>) olinks.entrySet()) {
-                    for (String val : entry.getValue()) {
-                        checkOlink(entry.getKey(), val);
-                    }
+                for (Map.Entry<String, String> entry : olinks.entries()) {
+                    checkOlink(entry.getKey(), entry.getValue());
                 }
             }
             if (!failedUrls.isEmpty()) {
@@ -349,8 +346,8 @@ public class LinkTester extends AbstractMojo {
             failedUrls.put(path, olink);
             return;
         }
-        Collection coll = xmlIds.getCollection(parts[0]);
-        if (coll == null || !coll.contains(parts[1])) {
+
+        if (!xmlIds.containsEntry(parts[0], parts[1])) {
             failedUrls.put(path, olink);
         }
     }
