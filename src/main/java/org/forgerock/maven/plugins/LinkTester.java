@@ -26,7 +26,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -259,6 +261,9 @@ public class LinkTester extends AbstractMojo {
         scanner.scan();
 
         String[] files = scanner.getIncludedFiles();
+        if (getLog().isDebugEnabled()) {
+            debug("Scanning " + docSource + " revealed the following doc files:\n" + Arrays.toString(files));
+        }
         for (String relativePath : files) {
             currentPath = relativePath;
             try {
@@ -340,10 +345,10 @@ public class LinkTester extends AbstractMojo {
                 }
             }
         } catch (SocketTimeoutException ste) {
-            warn(docUrl + ": " + ste.getClass().getName() + " " + ste.getMessage());
+            warn(docUrl + ": " + ste.toString());
             timedOutUrls.put(path, docUrl);
         } catch (Exception ex) {
-            warn(docUrl + ": " + ex.getClass().getName() + " " + ex.getMessage());
+            warn(docUrl + ": " + ex.toString());
             failedUrls.put(path, docUrl);
         }
         tested.add(docUrl);
