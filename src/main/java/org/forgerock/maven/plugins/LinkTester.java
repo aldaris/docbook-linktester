@@ -158,6 +158,7 @@ public class LinkTester extends AbstractMojo {
                 outputFile.delete();
             }
             try {
+                outputFile.getParentFile().mkdirs();
                 outputFile.createNewFile();
                 fileWriter = new FileWriter(outputFile);
             } catch (IOException ioe) {
