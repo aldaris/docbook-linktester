@@ -147,6 +147,14 @@ public class LinkTester extends AbstractMojo {
         }
     }
 
+    private void initializeSkipUrlPatterns() {
+        if (skipUrlPatterns != null) {
+            for (String pattern : skipUrlPatterns) {
+                patterns.add(Pattern.compile(pattern));
+            }
+        }
+    }
+
     @Override()
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (outputFile != null) {
@@ -352,6 +360,16 @@ public class LinkTester extends AbstractMojo {
         }
     }
 
+    private boolean shouldSkipUrl(String docUrl) {
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(docUrl).matches()) {
+                return true;
+            }
+        }
+        //if the skipUrlPattern list is empty or there was no match, then we should check the URL
+        return false;
+    }
+
     /**
      * Returns the path of the currently parsed XML file.
      *
@@ -425,23 +443,5 @@ public class LinkTester extends AbstractMojo {
                 getLog().error("Error while flushing report: " + ioe.getMessage());
             }
         }
-    }
-
-    private void initializeSkipUrlPatterns() {
-        if (skipUrlPatterns != null) {
-            for (String pattern : skipUrlPatterns) {
-                patterns.add(Pattern.compile(pattern));
-            }
-        }
-    }
-
-    private boolean shouldSkipUrl(String docUrl) {
-        for (Pattern pattern : patterns) {
-            if (pattern.matcher(docUrl).matches()) {
-                return true;
-            }
-        }
-        //if the skipUrlPattern list is empty or there was no match, then we should check the URL
-        return false;
     }
 }
