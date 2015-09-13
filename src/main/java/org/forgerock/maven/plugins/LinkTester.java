@@ -216,14 +216,15 @@ public class LinkTester extends AbstractMojo {
             }
         }
 
-        try {
-            if (!skipOlinks) {
-                //we can only check olinks after going through all the documents, otherwise we would see false
-                //positives, because of the not yet processed files
-                for (Map.Entry<String, String> entry : olinks.entries()) {
-                    checkOlink(entry.getKey(), entry.getValue());
-                }
+        if (!skipOlinks) {
+            //we can only check olinks after going through all the documents, otherwise we would see false
+            //positives, because of the not yet processed files
+            for (Map.Entry<String, String> entry : olinks.entries()) {
+                checkOlink(entry.getKey(), entry.getValue());
             }
+        }
+
+        try {
             if (!failedUrls.isEmpty()) {
                 error("The following files had invalid URLs:\n" + failedUrls.toString());
             }
