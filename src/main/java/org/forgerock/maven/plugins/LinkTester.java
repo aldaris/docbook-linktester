@@ -69,7 +69,7 @@ import org.xml.sax.SAXException;
 
 /**
  * This goal will check the selected DocBook documents for XML validity and will also verify the validity of external
- * links and interdocument olinks that can be found throughout the project.
+ * links and inter-document olinks that can be found throughout the project.
  */
 @Mojo(name = "check")
 public class LinkTester extends AbstractMojo {
@@ -100,40 +100,40 @@ public class LinkTester extends AbstractMojo {
     @Parameter(defaultValue = "false")
     private boolean xIncludeAware;
     /**
-     * Set to <code>true</code> if you want to disable olink checks in your DocBook document.
+     * Whether to skip validation of olinks in the DocBook document.
      */
     @Parameter(defaultValue = "false")
     private boolean skipOlinks;
     /**
-     * Set to <code>true</code> if you want to disable checks for external links.
+     * Whether to skip validation of external URLs in the DocBook document.
      */
     @Parameter(defaultValue = "false")
     private boolean skipUrls;
     /**
-     * Valid {@link java.util.regex.Pattern Pattern} enumeration. URLs matching either one of the patterns won't get
-     * validated.
+     * A list of regular expressions (in valid {@link java.util.regex.Pattern Pattern} format). URLs matching any of
+     * these regular expressions will not be validated.
      */
     @Parameter
     private String[] skipUrlPatterns;
     /**
-     * Set to <code>true</code> if you want to fail the build upon validation error or invalid links.
+     * Whether to fail the current build if there was any kind of validation error.
      */
     @Parameter(defaultValue = "false")
     private boolean failOnError;
     /**
-     * The location of the file where the plugin report is written.
+     * The location of the file where the plugin report will be written.
      */
     @Parameter
     private File outputFile;
-    private FileWriter fileWriter;
-    private boolean failure;
-    private String currentPath;
     private final List<Pattern> patterns = new ArrayList<Pattern>();
     private final Multimap<String, String> failedUrls = ArrayListMultimap.create();
     private final Multimap<String, String> timedOutUrls = ArrayListMultimap.create();
     private final Multimap<String, String> xmlIds = ArrayListMultimap.create();
     private final Multimap<String, String> olinks = ArrayListMultimap.create();
     private final Set<String> tested = new HashSet<String>();
+    private FileWriter fileWriter;
+    private boolean failure;
+    private String currentPath;
 
     static {
         TrustManager[] trustAllCerts = new TrustManager[]{new TrustAllCertsX509TrustManager()};
@@ -352,11 +352,21 @@ public class LinkTester extends AbstractMojo {
         }
     }
 
+    /**
+     * Returns the path of the currently parsed XML file.
+     *
+     * @return The relative path for the currently parsed XML file.
+     */
     public String getCurrentPath() {
         return currentPath;
     }
 
-    public void fail(String errorMessage) {
+    /**
+     * Sets the failure status and logs the reported error message.
+     *
+     * @param errorMessage The error message to log for this failure.
+     */
+    public final void fail(String errorMessage) {
         failure = true;
         error(errorMessage);
     }
