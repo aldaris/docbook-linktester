@@ -309,7 +309,7 @@ public class LinkTester extends AbstractMojo {
                 if (isOlink && !skipOlinks) {
                     olinks.put(currentPath, url);
                 } else if (!isOlink && !skipUrls) {
-                    checkUrl(currentPath, url);
+                    checkUrl(url);
                 }
             }
         }
@@ -339,18 +339,18 @@ public class LinkTester extends AbstractMojo {
         }
     }
 
-    private void checkUrl(String path, String docUrl) {
+    private void checkUrl(String docUrl) {
         if (shouldSkipUrl(docUrl)) {
             debug("Skipping " + docUrl + " since it matches a skipUrlPattern");
             return;
         }
         if (tested.contains(docUrl)) {
             if (failedUrls.containsValue(docUrl)) {
-                failedUrls.put(path, docUrl);
+                failedUrls.put(currentPath, docUrl);
             }
             return;
         }
-        debug("Checking " + docUrl + " from file: " + path);
+        debug("Checking " + docUrl + " from file: " + currentPath);
         try {
             URL url = new URL(docUrl);
             URLConnection urlConn = url.openConnection();
@@ -369,15 +369,15 @@ public class LinkTester extends AbstractMojo {
                 int responseCode = conn.getResponseCode();
                 if (responseCode >= 400) {
                     warn(docUrl + ": received unexpected response code: " + responseCode);
-                    failedUrls.put(path, docUrl);
+                    failedUrls.put(currentPath, docUrl);
                 }
             }
         } catch (SocketTimeoutException ste) {
             warn(docUrl + ": " + ste.toString());
-            timedOutUrls.put(path, docUrl);
+            timedOutUrls.put(currentPath, docUrl);
         } catch (Exception ex) {
             warn(docUrl + ": " + ex.toString());
-            failedUrls.put(path, docUrl);
+            failedUrls.put(currentPath, docUrl);
         }
         tested.add(docUrl);
     }
