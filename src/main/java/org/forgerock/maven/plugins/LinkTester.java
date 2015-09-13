@@ -127,12 +127,12 @@ public class LinkTester extends AbstractMojo {
      */
     @Parameter
     private File outputFile;
-    private final List<Pattern> patterns = new ArrayList<Pattern>();
+    private final List<Pattern> patterns = new ArrayList<>();
     private final Multimap<String, String> failedUrls = ArrayListMultimap.create();
     private final Multimap<String, String> timedOutUrls = ArrayListMultimap.create();
     private final Multimap<String, String> xmlIds = ArrayListMultimap.create();
     private final Multimap<String, String> olinks = ArrayListMultimap.create();
-    private final Set<String> tested = new HashSet<String>();
+    private final Set<String> tested = new HashSet<>();
     private FileWriter fileWriter;
     private boolean failure;
     private String currentPath;
