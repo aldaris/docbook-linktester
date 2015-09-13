@@ -251,7 +251,7 @@ public class LinkTester extends AbstractMojo {
 
         String[] files = scanner.getIncludedFiles();
         for (String relativePath : files) {
-            setCurrentPath(relativePath);
+            currentPath = relativePath;
             try {
                 Document doc = db.parse(new File(baseDir, relativePath));
                 if (!skipOlinks) {
@@ -354,10 +354,6 @@ public class LinkTester extends AbstractMojo {
 
     public String getCurrentPath() {
         return currentPath;
-    }
-
-    private void setCurrentPath(String path) {
-        currentPath = path;
     }
 
     public void fail(String errorMessage) {
