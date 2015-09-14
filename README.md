@@ -5,6 +5,8 @@ This is a simple Maven plugin allowing you to do some sanity checks on your docu
 * If it's an olink and it's in the format of targetdoc#targetptr, then the plugin will look up all the xml:id attributes throughout the document, if the referred id belongs to the targetdoc, then the check was successful.
 * If it's a regular link, an HttpURLConnection will be opened, and if the response code is higher or equals to 400, the link is considered invalid
 
+Since version 2.0.0 the plugin also validates olinks stored in &lt;olink&gt; XML elements. The targetdoc and targetptr attributes must be present for such elements for the validation to work correctly.
+
 ## Sample Configuration
 
 In the pom.xml file you need to add the following section to the build-plugins list:
@@ -67,13 +69,13 @@ This will bind the plugin invocation to the pre-site phase. About the configurat
 By setting the execution in the pom.xml the plugin will be invoked during the build, but if you only want to execute the plugin every now and then, you can use the following command:
 
 ```
-mvn org.forgerock.maven.plugins:linktester-maven-plugin:1.3.0-SNAPSHOT:check
+mvn org.forgerock.maven.plugins:linktester-maven-plugin:2.0.0-SNAPSHOT:check
 ```
 
 To check out the plugin's help, run:
 
 ```
-mvn org.forgerock.maven.plugins:linktester-maven-plugin:1.3.0-SNAPSHOT:help
+mvn org.forgerock.maven.plugins:linktester-maven-plugin:2.0.0-SNAPSHOT:help
 ```
 
 ## License
