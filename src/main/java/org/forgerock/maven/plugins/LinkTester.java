@@ -20,13 +20,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -76,7 +74,7 @@ import org.xml.sax.SAXException;
 @Mojo(name = "check")
 public class LinkTester extends AbstractMojo {
 
-    private static final String DOCBOOK_XSD = "http://docbook.org/xml/5.0/xsd/docbook.xsd";
+    private static final String DOCBOOK_XSD = "/xsd/docbook.xsd";
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
     private static final SSLSocketFactory TRUST_ALL_SOCKET_FACTORY;
@@ -186,10 +184,8 @@ public class LinkTester extends AbstractMojo {
         if (validating) {
             SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
-                Schema schema = sf.newSchema(new URL(DOCBOOK_XSD));
+                Schema schema = sf.newSchema(LinkTester.class.getResource(DOCBOOK_XSD));
                 dbf.setSchema(schema);
-            } catch (MalformedURLException murle) {
-                error("Invalid URL provided as schema source", murle);
             } catch (SAXException saxe) {
                 error("Parsing error occurred while constructing schema for validation", saxe);
             }
