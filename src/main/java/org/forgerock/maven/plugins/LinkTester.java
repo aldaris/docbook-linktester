@@ -27,6 +27,7 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,10 @@ public class LinkTester extends AbstractMojo {
     private static final String DOCBOOK_XSD = "/xsd/docbook.xsd";
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
+    private static final String DEBUG = "[DEBUG] ";
+    private static final String INFO = "[INFO] ";
+    private static final String WARNING = "[WARNING] ";
+    private static final String ERROR = "[ERROR] ";
     private static final SSLSocketFactory TRUST_ALL_SOCKET_FACTORY;
 
     /**
@@ -223,12 +228,15 @@ public class LinkTester extends AbstractMojo {
         }
 
         try {
+            info("################################################################################");
+            info("#                           LINKTESTER PLUGIN REPORT                           #");
+            info("################################################################################");
             if (!failedUrls.isEmpty()) {
-                error("The following files had invalid URLs:\n" + failedUrls.toString());
+                error("The following invalid URLs have been found:\n" + mapAsString(failedUrls, ERROR));
             }
             if (!timedOutUrls.isEmpty()) {
-                warn("The following files had unavailable URLs (connection or read timed out):\n"
-                        + timedOutUrls.toString());
+                warn("The following URLs were unavailable (connection or read timed out):\n"
+                        + mapAsString(timedOutUrls, WARNING));
             }
             if (failedUrls.isEmpty() && timedOutUrls.isEmpty() && !failure) {
                 //there are no failed URLs and the parser didn't encounter any errors either
@@ -422,28 +430,38 @@ public class LinkTester extends AbstractMojo {
     public final void debug(String line) {
         if (getLog().isDebugEnabled()) {
             getLog().debug(line);
-            report("[DEBUG] " + line);
         }
     }
 
     public final void warn(String line) {
         getLog().warn(line);
-        report("[WARNING] " + line);
+        report(WARNING + line);
     }
 
     public final void info(String line) {
         getLog().info(line);
-        report("[INFO] " + line);
+        report(INFO + line);
     }
 
     public final void error(String line) {
         getLog().error(line);
-        report("[ERROR] " + line);
+        report(ERROR + line);
     }
 
     public final void error(String line, Throwable throwable) {
         getLog().error(line, throwable);
-        report("[ERROR] " + line, throwable);
+        report(ERROR + line, throwable);
+    }
+
+    private final String mapAsString(Multimap<String, String> map, String prefix) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Collection<String>> entry : map.asMap().entrySet()) {
+            sb.append(prefix).append("* ").append(entry.getKey()).append('\n');
+            for (String value : entry.getValue()) {
+                sb.append(prefix).append("\t- ").append(value).append('\n');
+            }
+        }
+        return sb.substring(0, sb.length() -1);
     }
 
     private void report(String line) {

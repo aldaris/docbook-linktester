@@ -56,11 +56,10 @@
     <chapter xml:id="first-chapter">
         <title>First Chapter</title>
 
-        <para>Here's a<link xlink:href="no-such-book#missing-chapter"
-                            xlink:role="http://docbook.org/xlink/role/olink">broken link</link>, and here is an even
-            more broken link <olink targetdoc="book2" targetptr="broken-olink" />
+        <para>
+            Here's a <link xlink:href="no-such-book#missing-chapter" xlink:role="http://docbook.org/xlink/role/olink">broken link</link>,
+            and here is an even more broken link <olink targetdoc="book2" targetptr="broken-olink" />.
         </para>
-
     </chapter>
 
     <xinclude:include href='chap-external.xml'/>
