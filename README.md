@@ -1,9 +1,9 @@
 # DocBook link tester Maven plugin
 
-This is a simple Maven plugin allowing you to do some sanity checks on your documentation links. Basically the plugin will look for &lt;link&gt; tags, and check whether they are olinks or not.
+This is a simple Maven plugin allowing you to validate external (and internal) links within your DocBook based documentation. The plugin will look for &lt;link&gt; and &lt;olink&gt; elements and will handle them accordingly:
 
-* If it's an olink and it's in the format of targetdoc#targetptr, then the plugin will look up all the xml:id attributes throughout the document, if the referred id belongs to the targetdoc, then the check was successful.
-* If it's a regular link, an HttpURLConnection will be opened, and if the response code is higher or equals to 400, the link is considered invalid
+* For &lt;olink&gt; elements or &lt;link&gt; elements with olink `role` (in the format of targetdoc#targetptr), the plugin will first look up all the xml:id attributes throughout the document. If the targetdoc exists and has the references targetptr, then the olink was valid.
+* If it's a regular link, an HttpURLConnection will be opened, and if the response code is less than 400, the link is considered valid.
 
 Since version 2.0.0 the plugin also validates olinks stored in &lt;olink&gt; XML elements. The targetdoc and targetptr attributes must be present for such elements for the validation to work correctly.
 
@@ -15,7 +15,7 @@ In the pom.xml file you need to add the following section to the build-plugins l
 <plugin>
  <groupId>org.forgerock.maven.plugins</groupId>
  <artifactId>linktester-maven-plugin</artifactId>
- <version>1.3.0-SNAPSHOT</version>
+ <version>2.0.0-SNAPSHOT</version>
  <inherited>false</inherited>
  <executions>
   <execution>
@@ -38,7 +38,7 @@ In the pom.xml file you need to add the following section to the build-plugins l
    </docSource>
   </docSources>
   <validating>false</validating>
-  <xIncludeAware>false</xIncludeAware>
+  <xIncludeAware>true</xIncludeAware>
   <failOnError>false</failOnError>
   <skipUrls>false</skipUrls>
   <skipOlinks>false</skipOlinks>
@@ -53,15 +53,15 @@ In the pom.xml file you need to add the following section to the build-plugins l
 This will bind the plugin invocation to the pre-site phase. About the configuration options:
 
 * docSource(s) - A set of files determined by a base directory and a set of include and exclude patterns.
- * directory - Directory where the DocBook XML files are found. Default directory is the project's `${basedir}`.
- * include(s) - The include patterns for doc files under `directory`. When xIncludeAware is used only include the books.
- * exclude(s) - The exclude patterns for doc files under `directory`. When xIncludeAware is not used, it is recommended to exclude the books (and/or disable validation).
+ * directory - Directory where the DocBook XML files can be found. Default directory is the project's `${basedir}`.
+ * include(s) - The include patterns for doc files under `directory`. When `xIncludeAware` is used only include the books.
+ * exclude(s) - The exclude patterns for doc files under `directory`. When `xIncludeAware` is not used, it is recommended to exclude the books (and/or disable validation).
 * validating - The XML files will be validated against the DocBook XML Schema. NOTE: XML validation doesn't appear to like xinclude tags, so either use xIncludeAware, or exclude books when using this option (in case you have a book XML that xincludes chapters).
-* xIncludeAware - When enabled the XML parser will resolve the xinclude:include tags and will inline them into XML. This option can come in handy when your books refer to generated chapters, as this will make sure the internal olink database has the correct targetdoc value. If this is enabled, then most likely you only want to include the book XMLs and not the chapters.
+* xIncludeAware - When enabled the XML parser will resolve the xinclude:include tags and will inline them into XML. This option can come in handy when your books refer to generated chapters, as this will make sure the internal olink database has the correct targetdoc value. If this is enabled, then most likely you only want to include the book XMLs in `docSources` (i.e. exclude the individual chapters).
 * failOnError - When enabled, any XML schema validation failure or invalid olink/url in document will result in a failed build.
 * skipUrls - When enabled, URLs throughout the document are not checked.
 * skipOlinks - When enabled, olinks throughout the document are not checked.
-* skipUrlPatterns - This list expects a set of valid [Patterns](http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html), and basically if the external URL in question is matched, then that URL won't be tested. Useful for release notes, with bunch of similarly structured URLs (especially if it's generated).
+* skipUrlPatterns - This list expects a set of valid [Patterns](http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html). URLs matching any of the defined patterns will be excluded from validation. Useful for release notes, with bunch of similarly structured URLs (especially if it's generated).
 * outputFile - The validation results will be also logged to this file. (It will override the file on subsequent runs.)
 
 ## Execution
