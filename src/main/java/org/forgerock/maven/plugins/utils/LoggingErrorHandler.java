@@ -11,7 +11,7 @@
  * Header, with the fields enclosed by brackets [] replaced by your own identifying
  * information: "Portions copyright [year] [name of copyright owner]".
  *
- * Copyright 2011-2014 ForgeRock AS.
+ * Copyright 2011-2015 ForgeRock AS.
  */
 package org.forgerock.maven.plugins.utils;
 
@@ -33,14 +33,17 @@ public class LoggingErrorHandler implements ErrorHandler {
         this.linkTester = linkTester;
     }
 
+    @Override
     public void warning(SAXParseException saxpe) throws SAXException {
         linkTester.warn("Warning while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
     }
 
+    @Override
     public void error(SAXParseException saxpe) throws SAXException {
         linkTester.fail("Error while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
     }
 
+    @Override
     public void fatalError(SAXParseException saxpe) throws SAXException {
         linkTester.fail("Fatal error while processing: " + linkTester.getCurrentPath() + "\n" + saxpe.getMessage());
     }

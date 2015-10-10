@@ -11,7 +11,7 @@
  * Header, with the fields enclosed by brackets [] replaced by your own identifying
  * information: "Portions copyright [year] [name of copyright owner]".
  *
- * Copyright 2011-2014 ForgeRock AS.
+ * Copyright 2011-2015 ForgeRock AS.
  */
 package org.forgerock.maven.plugins.utils;
 
@@ -30,6 +30,7 @@ public class TrustAllCertsX509TrustManager implements X509TrustManager {
      *
      * @return An empty array of certs.
      */
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         return new X509Certificate[0];
     }
@@ -40,6 +41,7 @@ public class TrustAllCertsX509TrustManager implements X509TrustManager {
      * @param certs Peer certificate chain.
      * @param authType Authentication type based on the client certificate.
      */
+    @Override
     public void checkClientTrusted(X509Certificate[] certs, String authType) {
     }
 
@@ -49,6 +51,7 @@ public class TrustAllCertsX509TrustManager implements X509TrustManager {
      * @param certs Peer certificate chain.
      * @param authType The key exhange algorithm used.
      */
+    @Override
     public void checkServerTrusted(X509Certificate[] certs, String authType) {
     }
 }

@@ -11,7 +11,7 @@
  * Header, with the fields enclosed by brackets [] replaced by your own identifying
  * information: "Portions copyright [year] [name of copyright owner]".
  *
- * Copyright 2011-2014 ForgeRock AS.
+ * Copyright 2011-2015 ForgeRock AS.
  */
 package org.forgerock.maven.plugins.utils;
 
@@ -23,6 +23,7 @@ import javax.net.ssl.SSLSession;
  */
 public class TrustAllHostnameVerifier implements HostnameVerifier {
 
+    @Override
     public boolean verify(String hostname, SSLSession sslSession) {
         return true;
     }

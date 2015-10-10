@@ -11,7 +11,7 @@
  * Header, with the fields enclosed by brackets [] replaced by your own identifying
  * information: "Portions copyright [year] [name of copyright owner]".
  *
- * Copyright 2011-2014 ForgeRock AS.
+ * Copyright 2011-2015 ForgeRock AS.
  */
 package org.forgerock.maven.plugins;
 
@@ -78,7 +78,6 @@ public class LinkTester extends AbstractMojo {
     private static final String DOCBOOK_XSD = "/xsd/docbook.xsd";
     private static final String DOCBOOK_NS = "http://docbook.org/ns/docbook";
     private static final String OLINK_ROLE = "http://docbook.org/xlink/role/olink";
-    private static final String DEBUG = "[DEBUG] ";
     private static final String INFO = "[INFO] ";
     private static final String WARNING = "[WARNING] ";
     private static final String ERROR = "[ERROR] ";
@@ -277,8 +276,8 @@ public class LinkTester extends AbstractMojo {
                     processOlinkElements(doc.getElementsByTagNameNS(DOCBOOK_NS, "olink"));
                 }
                 processLinkElements(doc.getElementsByTagNameNS(DOCBOOK_NS, "link"));
-            } catch (Exception ex) {
-                error("Error while processing file: " + relativePath + ". Error: " + ex.getMessage(), ex);
+            } catch (IOException | SAXException | XPathExpressionException ex) {
+                error("An error occurred while processing file: " + relativePath, ex);
             }
         }
     }
@@ -453,7 +452,7 @@ public class LinkTester extends AbstractMojo {
         report(ERROR + line, throwable);
     }
 
-    private final String mapAsString(Multimap<String, String> map, String prefix) {
+    private String mapAsString(Multimap<String, String> map, String prefix) {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, Collection<String>> entry : map.asMap().entrySet()) {
             sb.append(prefix).append("* ").append(entry.getKey()).append('\n');

@@ -11,7 +11,7 @@
  * Header, with the fields enclosed by brackets [] replaced by your own identifying
  * information: "Portions copyright [year] [name of copyright owner]".
  *
- * Copyright 2011-2014 ForgeRock AS.
+ * Copyright 2011-2015 ForgeRock AS.
  */
 package org.forgerock.maven.plugins.utils;
 
@@ -24,6 +24,7 @@ import javax.xml.namespace.NamespaceContext;
  */
 public class XmlNamespaceContext implements NamespaceContext {
 
+    @Override
     public String getNamespaceURI(String prefix) {
         if (prefix == null) {
             throw new NullPointerException("Null prefix");
@@ -34,10 +35,12 @@ public class XmlNamespaceContext implements NamespaceContext {
         return XMLConstants.NULL_NS_URI;
     }
 
+    @Override
     public String getPrefix(String namespaceURI) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    @Override
     public Iterator getPrefixes(String namespaceURI) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
