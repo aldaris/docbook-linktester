@@ -52,24 +52,19 @@
             <name>Peter Major</name>
             <organization>ForgeRock</organization>
             <organizationUrl>http://forgerock.com</organizationUrl>
-            <timezone>0</timezone>
+            <timezone>+1</timezone>
         </developer>
     </developers>
 
     <profiles>
         <profile>
-            <id>central</id>
+            <id>release</id>
             <distributionManagement>
                 <snapshotRepository>
                     <id>ossrh</id>
                     <name>Sonatype Nexus Snapshots</name>
                     <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
                 </snapshotRepository>
-                <repository>
-                    <id>ossrh</id>
-                    <name>Nexus Release Repository</name>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
             </distributionManagement>
             <build>
                 <pluginManagement>
@@ -86,6 +81,15 @@
                             <artifactId>maven-gpg-plugin</artifactId>
                             <version>1.6</version>
                         </plugin>
+                        <plugin>
+                            <groupId>org.sonatype.plugins</groupId>
+                            <artifactId>nexus-staging-maven-plugin</artifactId>
+                            <version>1.6.6</version>
+                        </plugin>
+                        <plugin>
+                            <artifactId>maven-release-plugin</artifactId>
+                            <version>2.5.2</version>
+                        </plugin>
                     </plugins>
                 </pluginManagement>
                 <plugins>
@@ -93,7 +97,7 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
+                                <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
@@ -122,6 +126,24 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <configuration>
+                            <autoVersionSubmodules>true</autoVersionSubmodules>
+                            <useReleaseProfile>false</useReleaseProfile>
+                            <releaseProfiles>release</releaseProfiles>
+                            <goals>deploy</goals>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
