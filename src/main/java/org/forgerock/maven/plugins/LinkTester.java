@@ -386,13 +386,16 @@ public class LinkTester extends AbstractMojo {
     }
 
     private void checkOlink(String path, String olink) {
+        debug("Checking olink " + olink + " from file: " + path);
         String[] parts = olink.split("#");
         if (parts.length != 2) {
+            warn("Olink not in targetdoc#targetptr format: " + olink);
             failedUrls.put(path, olink);
             return;
         }
 
         if (!xmlIds.containsEntry(parts[0], parts[1])) {
+            warn("Olink not found in the docSource: " + olink);
             failedUrls.put(path, olink);
         }
     }
