@@ -53,6 +53,8 @@ import com.google.common.collect.Multimap;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -93,6 +95,8 @@ public class LinkTester extends AbstractMojo {
      */
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     protected MavenProject project = new MavenProject();
+    @Parameter(defaultValue = "${plugin}", required = true, readonly = true)
+    protected PluginDescriptor plugin;
     /**
      * Whether to validate the XML against the DocBook XML Schema.
      */
@@ -369,6 +373,7 @@ public class LinkTester extends AbstractMojo {
                 //if we don't get anything back within 15 seconds it is safe to assume that something is really wrong
                 //with that site..
                 conn.setReadTimeout(15000);
+                conn.setRequestProperty("User-Agent", "DocBook-linktester/" + plugin.getVersion());
                 int responseCode = conn.getResponseCode();
                 if (responseCode >= 400) {
                     warn(docUrl + ": received unexpected response code: " + responseCode);
